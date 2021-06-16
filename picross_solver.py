@@ -2,8 +2,30 @@ import numpy as np
 from collections.abc import Iterable
 
 
-def _fill_row(row_constraint, row):
-    return 0
+def _inc_block(start_index, block_size, arr, possible_start=-1, end_index=-1):
+    if possible_start == -1:
+        possible_start = start_index + 1
+    if end_index == -1:
+        end_index = len(arr)
+    while possible_start + block_size - 1 < end_index:
+        if possible_start - 1 > start_index + block_size - 1 and arr[possible_start - 1] == 1 \
+                or possible_start + block_size < len(arr) and arr[possible_start + block_size] == 1:
+            possible_start += 1
+            continue
+        blocked = False
+        for i in range(possible_start, possible_start + block_size):
+            if arr[i] == 0:
+                possible_start = i + 1
+                blocked = True
+                break
+        if not blocked:
+            break
+    if possible_start + block_size - 1 >= end_index:
+        return False
+    for i in range(0, min(possible_start - start_index, block_size)):
+        arr[start_index + i] = -1
+        arr[possible_start + block_size - i - 1] = 1
+    return True
 
 
 def solve(row_constraints, col_constraints, puzzle):
@@ -22,7 +44,7 @@ def solve(row_constraints, col_constraints, puzzle):
 
     Returns
     -------
-    exit_code : boolean
+    is_solved : boolean
         Returns a boolean representing if the function was able to solve the
          nonogram or not. True means it was able to be solved with no issues;
          False means the puzzle was unable to be solved.
