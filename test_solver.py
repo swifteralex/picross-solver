@@ -44,3 +44,5 @@ def test_inc_block():
     assert not solver._inc_block(0, 10, arr)
     arr = [1, 1, 1]
     assert not solver._inc_block(0, 3, arr)
+    arr = [0, -1, -1, 1, 1, 1, 0, -1, -1, 0, 1, 1, 1, 1, 0, -1, -1, 1, 1, 1]
+    assert not solver._inc_block(3, 3, arr, possible_start=5, end_index=16)
