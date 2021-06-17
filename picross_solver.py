@@ -2,30 +2,81 @@ import numpy as np
 from collections.abc import Iterable
 
 
-def _inc_block(start_index, block_size, arr, possible_start=-1, end_index=-1):
-    if possible_start == -1:
-        possible_start = start_index + 1
-    if end_index == -1:
-        end_index = len(arr)
-    while possible_start + block_size - 1 < end_index:
-        if possible_start - 1 > start_index + block_size - 1 and arr[possible_start - 1] == 1 \
-                or possible_start + block_size < len(arr) and arr[possible_start + block_size] == 1:
-            possible_start += 1
-            continue
-        blocked = False
-        for i in range(possible_start, possible_start + block_size):
-            if arr[i] == 0:
-                possible_start = i + 1
-                blocked = True
+def _push_left(rule, arr):
+    block = 0
+    pos = [0] * len(rule)
+    solid = [-1] * len(rule)
+    target = 0
+
+    def invalid():
+        nonlocal target
+        nonlocal block
+        solid[block] = -1
+        for i in range(0, rule[block]):
+            if arr[pos[block] + i] == 0:
+                if solid[block] != -1:
+                    target = block
+                    drawing()
+                    return
+                pos[block] += i + 1
+                invalid()
+                return
+            if solid[block] == -1 and arr[pos[block] + i] == 1:
+                solid[block] = i
+
+        if solid[block] == -1 and pos[block] + rule[block] < len(arr) and arr[pos[block] + rule[block]] == 1:
+            solid[block] = rule[block]
+        while pos[block] + rule[block] < len(arr) and arr[pos[block] + rule[block]] == 1:
+            if solid[block] == 0:
+                target = block
+                drawing()
+                return
+            pos[block] += 1
+            solid[block] -= 1
+
+        if block != len(rule) - 1:
+            pos[block + 1] = pos[block] + rule[block] + 1
+            block += 1
+            invalid()
+            return
+        trailing_solid_pos = -1
+        for i in range(pos[block] + rule[block] + 1, len(arr)):
+            if arr[i] == 1:
+                trailing_solid_pos = i
                 break
-        if not blocked:
-            break
-    if possible_start + block_size - 1 >= end_index:
-        return False
-    for i in range(0, min(possible_start - start_index, block_size)):
-        arr[start_index + i] = -1
-        arr[possible_start + block_size - i - 1] = 1
-    return True
+        if trailing_solid_pos != -1:
+            if solid[block] > 0:
+                pos[block] += 1
+                solid[block] -= 1
+                invalid()
+                return
+            if solid[block] == 0:
+                target = block
+                drawing()
+                return
+            pos[block] = trailing_solid_pos
+            invalid()
+            return
+
+    def drawing():
+        nonlocal target
+        nonlocal block
+        block -= 1
+        if solid[block] > 0:
+            pos[block] += 1
+            solid[block] -= 1
+            invalid()
+            return
+        if solid[block] == 0:
+            target = block
+            drawing()
+            return
+        pos[block] = pos[target] + solid[target] - rule[block] + 1
+        invalid()
+        return
+
+    invalid()
+    return pos
 
 
 def solve(row_constraints, col_constraints, puzzle):
