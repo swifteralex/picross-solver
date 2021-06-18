@@ -174,7 +174,8 @@ def solve(row_constraints, col_constraints, puzzle):
         for i in range(0, 2):
             update_indices = update_row_indices if i else update_col_indices
             if not first_pass:
-                update_indices = [False] * (puzzle_height if i else puzzle_width)
+                for j in range(0, len(update_indices)):
+                    update_indices[j] = False
             first_pass = False
             for j in range(0, puzzle_width if i else puzzle_height):
                 arr = puzzle[:, j] if i else puzzle[j, :]
