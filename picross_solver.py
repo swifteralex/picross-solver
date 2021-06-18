@@ -9,7 +9,6 @@ def _push_left(rule, arr):
     target = 0
 
     def invalid():
-        print(pos)
         nonlocal target
         nonlocal block
         solid[block] = -1
@@ -50,14 +49,12 @@ def _push_left(rule, arr):
                 pos[block] += 1
                 solid[block] -= 1
                 invalid()
-                return
-            if solid[block] == 0:
+            elif solid[block] == 0:
                 target = block
                 drawing()
-                return
-            pos[block] = trailing_solid_pos - rule[block] + 1
-            invalid()
-            return
+            else:
+                pos[block] = trailing_solid_pos - rule[block] + 1
+                invalid()
 
     def drawing():
         nonlocal target
@@ -67,17 +64,58 @@ def _push_left(rule, arr):
             pos[block] += 1
             solid[block] -= 1
             invalid()
-            return
-        if solid[block] == 0:
+        elif solid[block] == 0:
             target = block
             drawing()
-            return
-        pos[block] = pos[target] + solid[target] - rule[block] + 1
-        invalid()
-        return
+        else:
+            pos[block] = pos[target] + solid[target] - rule[block] + 1
+            invalid()
 
     invalid()
     return pos
+
+
+def _push_solve(rule, arr):
+    left_pushed_blocks = _push_left(rule, arr)
+    rule.reverse()
+    arr.reverse()
+    right_pushed_blocks = _push_left(rule, arr)
+    arr.reverse()
+
+    temp_arr = [0] * len(arr)
+    num = 0
+    for block in range(0, len(rule)):
+        gap_start = 0 if block == 0 else left_pushed_blocks[block - 1] + rule[len(rule) - block]
+        block_size = rule[len(rule) - block - 1]
+        block_pos = left_pushed_blocks[block]
+        gap_end = block_pos - 1
+        for j in range(gap_start, gap_end + 1):
+            temp_arr[j] = num
+        num += 1
+        for j in range(block_pos, block_pos + block_size):
+            temp_arr[j] = num
+        num += 1
+    capped_gap_start = left_pushed_blocks[len(rule) - 1] + rule[0]
+    for i in range(capped_gap_start, len(arr)):
+        temp_arr[i] = num
+    num = 0
+    for block in range(0, len(rule)):
+        gap_start = 0 if block == 0 else len(arr) - right_pushed_blocks[len(rule) - block]
+        block_size = rule[len(rule) - block - 1]
+        block_pos = len(arr) - right_pushed_blocks[len(rule) - block - 1] - block_size
+        gap_end = block_pos - 1
+        for j in range(gap_start, gap_end + 1):
+            if temp_arr[j] == num:
+                arr[j] = 0
+        num += 1
+        for j in range(block_pos, block_pos + block_size):
+            if temp_arr[j] == num:
+                arr[j] = 1
+        num += 1
+    capped_gap_start = len(arr) - right_pushed_blocks[0]
+    for i in range(capped_gap_start, len(arr)):
+        if temp_arr[i] == num:
+            arr[i] = 0
 
 
 def solve(row_constraints, col_constraints, puzzle):
