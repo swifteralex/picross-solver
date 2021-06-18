@@ -70,3 +70,15 @@ def test_push_left():
            1, -1, 0, 1, -1, -1, 1, 1, 0, -1,
            -1, 1, 1, -1, 1, 1, -1, -1, -1, -1]
     assert solver._push_left(constraints, arr) == [2, 8, 13, 16, 21, 24]
+    constraints = [5]
+    arr = [-1, -1, -1, 1, -1, -1, -1, 1, -1, -1,
+           -1]
+    assert solver._push_left(constraints, arr) == [3]
+    constraints = [5]
+    arr = [-1, -1, -1, -1, -1, 0, -1, -1, -1, 1,
+           -1]
+    assert solver._push_left(constraints, arr) == [6]
+    constraints = [2, 2, 1, 1]
+    arr = [-1, -1, 1, -1, 1, -1, -1, -1, -1, -1,
+           -1, -1, -1, -1, 1]
+    assert solver._push_left(constraints, arr) == [1, 4, 7, 14]

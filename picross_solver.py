@@ -9,6 +9,7 @@ def _push_left(rule, arr):
     target = 0
 
     def invalid():
+        print(pos)
         nonlocal target
         nonlocal block
         solid[block] = -1
@@ -54,7 +55,7 @@ def _push_left(rule, arr):
                 target = block
                 drawing()
                 return
-            pos[block] = trailing_solid_pos
+            pos[block] = trailing_solid_pos - rule[block] + 1
             invalid()
             return
 
