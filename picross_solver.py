@@ -80,14 +80,15 @@ def _push_solve(rule, arr):
     rule.reverse()
     arr.reverse()
     right_pushed_blocks = _push_left(rule, arr)
+    rule.reverse()
     arr.reverse()
 
     changed_indices = []
     temp_arr = [0] * len(arr)
     num = 0
     for block in range(0, len(rule)):
-        gap_start = 0 if block == 0 else left_pushed_blocks[block - 1] + rule[len(rule) - block]
-        block_size = rule[len(rule) - block - 1]
+        gap_start = 0 if block == 0 else left_pushed_blocks[block - 1] + rule[block - 1]
+        block_size = rule[block]
         block_pos = left_pushed_blocks[block]
         gap_end = block_pos - 1
         for j in range(gap_start, gap_end + 1):
@@ -96,13 +97,13 @@ def _push_solve(rule, arr):
         for j in range(block_pos, block_pos + block_size):
             temp_arr[j] = num
         num += 1
-    capped_gap_start = left_pushed_blocks[len(rule) - 1] + rule[0]
+    capped_gap_start = left_pushed_blocks[len(rule) - 1] + rule[len(rule) - 1]
     for i in range(capped_gap_start, len(arr)):
         temp_arr[i] = num
     num = 0
     for block in range(0, len(rule)):
         gap_start = 0 if block == 0 else len(arr) - right_pushed_blocks[len(rule) - block]
-        block_size = rule[len(rule) - block - 1]
+        block_size = rule[block]
         block_pos = len(arr) - right_pushed_blocks[len(rule) - block - 1] - block_size
         gap_end = block_pos - 1
         for j in range(gap_start, gap_end + 1):
@@ -129,11 +130,11 @@ def solve(row_constraints, col_constraints, puzzle):
 
     Parameters
     ----------
-    row_constraints : Iterable[Iterable[int]]
+    row_constraints : List[List[int]]
         Defines all of the constraints in each row of the puzzle.
-    col_constraints : Iterable[Iterable[int]]
+    col_constraints : List[List[int]]
         Defines all of the constraints in each column of the puzzle.
-    puzzle : Iterable[Iterable[int]]
+    puzzle : List[List[int]]
         Overwritten with the nonogram solution. Should only contain values -1
          (unknown), 0 (empty), or 1 (filled).
 
@@ -163,6 +164,46 @@ def solve(row_constraints, col_constraints, puzzle):
     >>> cols = [[2], [2]]
     >>> solve(rows, cols, puz)
     Puzzle can't be resolved; returns False
-
     """
+
+    puzzle_height = len(puzzle)
+    puzzle_width = len(puzzle[0])
+    columns = []
+    for i in range(0, puzzle_width):
+        column = []
+        for j in range(0, puzzle_height):
+            column.append(puzzle[j][i])
+        columns.append(column)
+
+    first_pass = True
+    update_row_indices = [True] * puzzle_height
+    update_col_indices = [True] * puzzle_width
+    while True:
+        if not first_pass:
+            update_col_indices = [False] * puzzle_width
+        for i in range(0, puzzle_height):
+            if not update_row_indices[i]:
+                continue
+            changed_indices = _push_solve(row_constraints[i], puzzle[i])
+            for j in changed_indices:
+                columns[j][i] = puzzle[i][j]
+                update_col_indices[j] = True
+        no_progress = all(not x for x in update_col_indices)
+        if no_progress:
+            break
+
+        update_row_indices = [False] * puzzle_height
+        for i in range(0, puzzle_width):
+            if not update_col_indices[i]:
+                continue
+            changed_indices = _push_solve(col_constraints[i], columns[i])
+            for j in changed_indices:
+                puzzle[j][i] = columns[i][j]
+                update_row_indices[j] = True
+        no_progress = all(not x for x in update_row_indices)
+        if no_progress:
+            break
+
+        first_pass = False
+
     return 0
