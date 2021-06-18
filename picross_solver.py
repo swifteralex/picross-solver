@@ -1,5 +1,4 @@
 import numpy as np
-from collections.abc import Iterable
 
 
 def _push_left(rule, arr):
@@ -172,31 +171,20 @@ def solve(row_constraints, col_constraints, puzzle):
     update_row_indices = [True] * puzzle_height
     update_col_indices = [True] * puzzle_width
     while True:
-        if not first_pass:
-            update_col_indices = [False] * puzzle_width
-        for i in range(0, puzzle_height):
-            row = puzzle[i, :]
-            if not update_row_indices[i]:
-                continue
-            changed_indices = _push_solve(row_constraints[i], row)
-            for j in changed_indices:
-                update_col_indices[j] = True
-        no_progress = all(not x for x in update_col_indices)
-        if no_progress:
-            break
-
-        update_row_indices = [False] * puzzle_height
-        for i in range(0, puzzle_width):
-            column = puzzle[:, i]
-            if not update_col_indices[i]:
-                continue
-            changed_indices = _push_solve(col_constraints[i], column)
-            for j in changed_indices:
-                update_row_indices[j] = True
-        no_progress = all(not x for x in update_row_indices)
-        if no_progress:
-            break
-
-        first_pass = False
-
-    return 0
+        for i in range(0, 2):
+            update_indices = update_row_indices if i else update_col_indices
+            if not first_pass:
+                update_indices = [False] * (puzzle_height if i else puzzle_width)
+            first_pass = False
+            for j in range(0, puzzle_width if i else puzzle_height):
+                arr = puzzle[:, j] if i else puzzle[j, :]
+                if (update_col_indices if i else update_row_indices)[j]:
+                    try:
+                        changed_indices = _push_solve((col_constraints if i else row_constraints)[j], arr)
+                    except:
+                        return False
+                    for k in changed_indices:
+                        update_indices[k] = True
+            no_progress = all(not x for x in update_indices)
+            if no_progress:
+                return True
