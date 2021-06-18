@@ -1,3 +1,4 @@
+import pytest
 import picross_solver as solver
 
 _ = -1
@@ -69,37 +70,75 @@ def test_push_left():
 def test_push_solve():
     rule = [1]
     arr = [_]
-    solver._push_solve(rule, arr)
+    assert solver._push_solve(rule, arr) == [0]
     assert arr == [1]
     rule = [7]
     arr = [_, _, _, _, _, _, _, _, _]
-    solver._push_solve(rule, arr)
+    assert solver._push_solve(rule, arr) == [2, 3, 4, 5, 6]
     assert arr == [_, _, 1, 1, 1, 1, 1, _, _]
     rule = [7, 5]
     arr = [_, _, _, _, _, _, _, _, _, _, _, _, _, _]
-    solver._push_solve(rule, arr)
+    assert solver._push_solve(rule, arr) == [1, 2, 3, 4, 5, 6, 9, 10, 11, 12]
     assert arr == [_, 1, 1, 1, 1, 1, 1, _, _, 1, 1, 1, 1, _]
     rule = [2, 5]
     arr = [_, _, 1, _, _, _, _, 1, _, _, _, _, _, _, _]
-    solver._push_solve(rule, arr)
+    assert solver._push_solve(rule, arr) == [0, 8, 12, 13, 14]
     assert arr == [0, _, 1, _, _, _, _, 1, 1, _, _, _, 0, 0, 0]
     rule = [1, 1, 1, 4, 1, 1]
     arr = [_, _, _, _, _, _, _, _, _, _, _, _, 0, 1, 1, _, _, 0, _, _, _]
-    solver._push_solve(rule, arr)
+    assert solver._push_solve(rule, arr) == [15, 16, 18, 19, 20]
     assert arr == [_, _, _, _, _, _, _, _, _, _, _, _, 0, 1, 1, 1, 1, 0, 1, 0, 1]
     rule = [3, 5, 3]
     arr = [1, 1, 1, _, 1, 1, 1, 1, 1, _, _, _, _, _, 1]
-    solver._push_solve(rule, arr)
+    assert solver._push_solve(rule, arr) == [3, 9, 10, 11, 12, 13]
     assert arr == [1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1]
     rule = [1, 1, 1, 1, 1, 1]
     arr = [_, _, 1, _, _, _, _, 1, _, _, _, 1, _, 1, _, _, 1, _, 1, _, _]
-    solver._push_solve(rule, arr)
+    assert solver._push_solve(rule, arr) == [0, 1, 3, 4, 5, 6, 8, 9, 10, 12, 14, 15, 17, 19, 20]
     assert arr == [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0]
     rule = [1, 1, 1, 1, 1, 1, 1]
     arr = [_, _, 1, _, _, _, _, 1, _, _, _, 1, _, 1, _, _, 1, _, 1, _, _]
-    solver._push_solve(rule, arr)
+    assert solver._push_solve(rule, arr) == []
     assert arr == [_, _, 1, _, _, _, _, 1, _, _, _, 1, _, 1, _, _, 1, _, 1, _, _]
     rule = [1, 5, 1, 3, 7]
     arr = [_, _, _, _, _, 1, _, _, 1, 1, 1, _, 0, 1, 0, _, 1, 1, _, _, _, _, _, _, 1, _, _, _, _]
-    solver._push_solve(rule, arr)
+    assert solver._push_solve(rule, arr) == [0, 1, 2, 3, 4, 6, 7, 11, 22, 23, 25]
     assert arr == [0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, _, 1, 1, _, _, _, _, 1, 1, 1, 1, _, _, _]
+
+    # test error checking
+    rule = [5]
+    arr = [_, _, 0, _, 0, _, _, _, 0, _, _, _, 0, _, _]
+    with pytest.raises(Exception):
+        x = solver._push_solve(rule, arr)
+    rule = [1, 3, 3]
+    arr = [_, 1, _, 1, 1, 1, _, 0, 1, 1, 0, _]
+    with pytest.raises(Exception):
+        x = solver._push_solve(rule, arr)
+    rule = [1, 3, 3]
+    arr = [_, 1, _, 1, 1, 1, _, 0, 1, 1, 0, _]
+    with pytest.raises(Exception):
+        x = solver._push_solve(rule, arr)
+    rule = [1, 3, 4, 3, 6, 5]
+    arr = [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, 0, 1, 1, 0, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]
+    with pytest.raises(Exception):
+        x = solver._push_solve(rule, arr)
+    rule = [1, 1, 2]
+    arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    with pytest.raises(Exception):
+        x = solver._push_solve(rule, arr)
+    rule = [1, 1, 2]
+    arr = [1, _, 1, 1, _, _, _, _, _, _, _]
+    with pytest.raises(Exception):
+        x = solver._push_solve(rule, arr)
+    rule = [1, 1, 3]
+    arr = [_, _, _, _, _, _, _, _, 0, 1, _]
+    with pytest.raises(Exception):
+        x = solver._push_solve(rule, arr)
+    rule = [2, 1]
+    arr = [1, _, 1, _, _, _, _, _]
+    with pytest.raises(Exception):
+        x = solver._push_solve(rule, arr)
+    rule = [4]
+    arr = [_, _, 1, _, _, _, 1, _]
+    with pytest.raises(Exception):
+        x = solver._push_solve(rule, arr)

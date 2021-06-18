@@ -82,6 +82,7 @@ def _push_solve(rule, arr):
     right_pushed_blocks = _push_left(rule, arr)
     arr.reverse()
 
+    changed_indices = []
     temp_arr = [0] * len(arr)
     num = 0
     for block in range(0, len(rule)):
@@ -105,17 +106,21 @@ def _push_solve(rule, arr):
         block_pos = len(arr) - right_pushed_blocks[len(rule) - block - 1] - block_size
         gap_end = block_pos - 1
         for j in range(gap_start, gap_end + 1):
-            if temp_arr[j] == num:
+            if temp_arr[j] == num and arr[j] != 0:
+                changed_indices.append(j)
                 arr[j] = 0
         num += 1
         for j in range(block_pos, block_pos + block_size):
-            if temp_arr[j] == num:
+            if temp_arr[j] == num and arr[j] != 1:
+                changed_indices.append(j)
                 arr[j] = 1
         num += 1
     capped_gap_start = len(arr) - right_pushed_blocks[0]
     for i in range(capped_gap_start, len(arr)):
-        if temp_arr[i] == num:
+        if temp_arr[i] == num and arr[i] != 0:
+            changed_indices.append(i)
             arr[i] = 0
+    return changed_indices
 
 
 def solve(row_constraints, col_constraints, puzzle):
