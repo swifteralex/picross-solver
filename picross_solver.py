@@ -77,11 +77,9 @@ def _push_left(rule, arr):
 
 def _push_solve(rule, arr):
     left_pushed_blocks = _push_left(rule, arr)
-    rule.reverse()
-    arr.reverse()
-    right_pushed_blocks = _push_left(rule, arr)
-    rule.reverse()
-    arr.reverse()
+    arr_r = arr[::-1]
+    rule_r = rule[::-1]
+    right_pushed_blocks = _push_left(rule_r, arr_r)
 
     changed_indices = []
     temp_arr = [0] * len(arr)
@@ -130,11 +128,11 @@ def solve(row_constraints, col_constraints, puzzle):
 
     Parameters
     ----------
-    row_constraints : List[List[int]]
+    row_constraints : list[list[int]], np.ndarray
         Defines all of the constraints in each row of the puzzle.
-    col_constraints : List[List[int]]
+    col_constraints : list[list[int]], np.ndarray
         Defines all of the constraints in each column of the puzzle.
-    puzzle : List[List[int]]
+    puzzle : np.ndarray
         Overwritten with the nonogram solution. Should only contain values -1
          (unknown), 0 (empty), or 1 (filled).
 
@@ -148,6 +146,7 @@ def solve(row_constraints, col_constraints, puzzle):
     Examples
     --------
     >>> puz = [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]
+    >>> puz = np.array(puz)
     >>> rows = [[1, 1], [0], [3]]
     >>> cols = [[1, 1], [1], [1, 1]]
     >>> solve(rows, cols, puz)
@@ -168,12 +167,6 @@ def solve(row_constraints, col_constraints, puzzle):
 
     puzzle_height = len(puzzle)
     puzzle_width = len(puzzle[0])
-    columns = []
-    for i in range(0, puzzle_width):
-        column = []
-        for j in range(0, puzzle_height):
-            column.append(puzzle[j][i])
-        columns.append(column)
 
     first_pass = True
     update_row_indices = [True] * puzzle_height
@@ -182,11 +175,11 @@ def solve(row_constraints, col_constraints, puzzle):
         if not first_pass:
             update_col_indices = [False] * puzzle_width
         for i in range(0, puzzle_height):
+            row = puzzle[i, :]
             if not update_row_indices[i]:
                 continue
-            changed_indices = _push_solve(row_constraints[i], puzzle[i])
+            changed_indices = _push_solve(row_constraints[i], row)
             for j in changed_indices:
-                columns[j][i] = puzzle[i][j]
                 update_col_indices[j] = True
         no_progress = all(not x for x in update_col_indices)
         if no_progress:
@@ -194,11 +187,11 @@ def solve(row_constraints, col_constraints, puzzle):
 
         update_row_indices = [False] * puzzle_height
         for i in range(0, puzzle_width):
+            column = puzzle[:, i]
             if not update_col_indices[i]:
                 continue
-            changed_indices = _push_solve(col_constraints[i], columns[i])
+            changed_indices = _push_solve(col_constraints[i], column)
             for j in changed_indices:
-                puzzle[j][i] = columns[i][j]
                 update_row_indices[j] = True
         no_progress = all(not x for x in update_row_indices)
         if no_progress:
