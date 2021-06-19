@@ -75,12 +75,19 @@ def _push_left(rule, arr):
 
 
 def _push_solve(rule, arr):
+    changed_indices = []
+    if len(rule) == 0 or rule[0] == 0:
+        for i in range(0, len(arr)):
+            if arr[i] == -1:
+                arr[i] = 0
+                changed_indices.append(i)
+        return changed_indices
+
     left_pushed_blocks = _push_left(rule, arr)
     arr_r = arr[::-1]
     rule_r = rule[::-1]
     right_pushed_blocks = _push_left(rule_r, arr_r)
 
-    changed_indices = []
     temp_arr = [0] * len(arr)
     num = 0
     for block in range(0, len(rule)):
@@ -144,8 +151,7 @@ def solve(row_constraints, col_constraints, puzzle):
 
     Examples
     --------
-    >>> puz = [[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]]
-    >>> puz = np.array(puz)
+    >>> puz = np.array([[-1, -1, -1], [-1, -1, -1], [-1, -1, -1]])
     >>> rows = [[1, 1], [0], [3]]
     >>> cols = [[1, 1], [1], [1, 1]]
     >>> solve(rows, cols, puz)
@@ -161,7 +167,7 @@ def solve(row_constraints, col_constraints, puzzle):
     >>> rows = [[2], [2]]
     >>> cols = [[2], [2]]
     >>> solve(rows, cols, puz)
-    Puzzle can't be resolved; returns False
+    Puzzle can't be solved; returns False
     """
 
     puzzle_height = len(puzzle)

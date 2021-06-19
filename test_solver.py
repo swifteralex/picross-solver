@@ -105,6 +105,18 @@ def test_push_solve():
     arr = [_, _, _, _, _, 1, _, _, 1, 1, 1, _, 0, 1, 0, _, 1, 1, _, _, _, _, _, _, 1, _, _, _, _]
     assert solver._push_solve(rule, arr) == [0, 1, 2, 3, 4, 6, 7, 11, 22, 23, 25]
     assert arr == [0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, _, 1, 1, _, _, _, _, 1, 1, 1, 1, _, _, _]
+    rule = [0]
+    arr = [_, _, _, _, _]
+    assert solver._push_solve(rule, arr) == [0, 1, 2, 3, 4]
+    assert arr == [0, 0, 0, 0, 0]
+    rule = [0]
+    arr = [_, 0, 0, _, _]
+    assert solver._push_solve(rule, arr) == [0, 3, 4]
+    assert arr == [0, 0, 0, 0, 0]
+    rule = []
+    arr = [0, 0, 0, 0]
+    assert solver._push_solve(rule, arr) == []
+    assert arr == [0, 0, 0, 0]
 
     # test error checking
     rule = [5]
@@ -213,3 +225,22 @@ def test_solve():
          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
          [0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
          [0, 0, 1, 1, 1, 1, 1, 1, 1, 0]]))
+
+    row_constraints = [[1, 2],
+                       [1, 2],
+                       [1, 2],
+                       [1, 2]]
+    col_constraints = [[4],
+                       [0],
+                       [0],
+                       [0],
+                       [0],
+                       [4],
+                       [4]]
+    puzzle = np.full((4, 7), _)
+    solver.solve(row_constraints, col_constraints, puzzle)
+    assert np.all(puzzle == np.array(
+        [[1, 0, 0, 0, 0, 1, 1],
+         [1, 0, 0, 0, 0, 1, 1],
+         [1, 0, 0, 0, 0, 1, 1],
+         [1, 0, 0, 0, 0, 1, 1]]))
