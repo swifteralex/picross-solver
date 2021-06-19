@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 
 def _push_left(rule, arr):
@@ -194,4 +195,22 @@ def solve(row_constraints, col_constraints, puzzle):
                         update_indices[k] = True
             no_progress = all(not x for x in update_indices)
             if no_progress:
-                return True
+                unfilled_points = []
+                for j in range(0, puzzle_height):
+                    for k in range(0, puzzle_width):
+                        if puzzle[j][k] == -1:
+                            point = [j, k]
+                            unfilled_points.append(point)
+                if len(unfilled_points) == 0:
+                    return True
+                puzzle_state = puzzle.copy()
+                random_unfilled = random.choice(unfilled_points)
+                puzzle[random_unfilled[0]][random_unfilled[1]] = 0
+                if solve(row_constraints, col_constraints, puzzle):
+                    return True
+                for j in range(0, puzzle_height):
+                    for k in range(0, puzzle_width):
+                        puzzle[j][k] = puzzle_state[j][k]
+                puzzle[random_unfilled[0]][random_unfilled[1]] = 1
+                update_row_indices[random_unfilled[0]] = True
+                update_col_indices[random_unfilled[1]] = True
