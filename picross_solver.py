@@ -1,15 +1,26 @@
 import numpy as np
 
 
-def _push_left(rule, arr):
+def _push_solve(rule, arr):
+    changed_indices = []
+    if len(rule) == 0 or rule[0] == 0:
+        for i in range(0, len(arr)):
+            if arr[i] == -1:
+                arr[i] = 0
+                changed_indices.append(i)
+        return changed_indices
+
     block = 0
-    pos = [0] * len(rule)
-    solid = [-1] * len(rule)
+    pos = np.array([0] * len(rule))
+    solid = np.array([-1] * len(rule))
     target = 0
+    valid_state_accumulation = np.array([0] * len(arr))
+    valid_states_found = 0
 
     def invalid():
         nonlocal target
         nonlocal block
+        nonlocal valid_states_found
         solid[block] = -1
         for i in range(0, rule[block]):
             if arr[pos[block] + i] == 0:
@@ -34,7 +45,8 @@ def _push_left(rule, arr):
             solid[block] -= 1
 
         if block != len(rule) - 1:
-            pos[block + 1] = pos[block] + rule[block] + 1
+            if pos[block + 1] < pos[block] + rule[block] + 1:
+                pos[block + 1] = pos[block] + rule[block] + 1
             block += 1
             invalid()
             return
@@ -54,11 +66,58 @@ def _push_left(rule, arr):
             else:
                 pos[block] = trailing_solid_pos - rule[block] + 1
                 invalid()
+        valid_states_found += 1
+        for b in range(0, len(rule)):
+            for i in range(pos[b], pos[b] + rule[b]):
+                valid_state_accumulation[i] += 1
+        # print(valid_state_accumulation)
+
+    def sliding():
+        nonlocal valid_states_found
+        lim = None
+        for i in range(len(rule) - 1, -1, -1):
+            if i == len(rule) - 1:
+                lim = len(arr)
+            else:
+                lim = pos[i + 1] - 1
+            while pos[i] + rule[i] < lim \
+                    and (solid[i] == -1 or solid[i] > 0) \
+                    and (arr[pos[i] + rule[i]] != 0 or solid[i] == -1):
+                if arr[pos[i] + rule[i]] == 0:
+                    index = pos[i] + rule[i] + 1
+                    while index + rule[i] <= lim:
+                        enough_room = True
+                        for j in range(index, index + rule[i]):
+                            if arr[j] == 0:
+                                index = j + 1
+                                enough_room = False
+                                break
+                        if enough_room:
+                            pos[i] = index
+                            valid_states_found += 1
+                            for b in range(0, len(rule)):
+                                for j in range(pos[b], pos[b] + rule[b]):
+                                    valid_state_accumulation[j] += 1
+                            # print(valid_state_accumulation)
+                            break
+                    if index + rule[i] > lim:
+                        break
+                else:
+                    if solid[i] != -1:
+                        solid[i] -= 1
+                    valid_states_found += 1
+                    pos[i] += 1
+                    for b in range(0, len(rule)):
+                        for j in range(pos[b], pos[b] + rule[b]):
+                            valid_state_accumulation[j] += 1
+                    # print(valid_state_accumulation)
 
     def drawing():
         nonlocal target
         nonlocal block
         block -= 1
+        if block < 0:
+            raise RuntimeError
         if solid[block] > 0:
             pos[block] += 1
             solid[block] -= 1
@@ -71,60 +130,30 @@ def _push_left(rule, arr):
             invalid()
 
     invalid()
-    return pos
-
-
-def _push_solve(rule, arr):
-    changed_indices = []
-    if len(rule) == 0 or rule[0] == 0:
-        for i in range(0, len(arr)):
-            if arr[i] == -1:
-                arr[i] = 0
-                changed_indices.append(i)
-        return changed_indices
-
-    left_pushed_blocks = _push_left(rule, arr)
-    arr_r = arr[::-1]
-    rule_r = rule[::-1]
-    right_pushed_blocks = _push_left(rule_r, arr_r)
-
-    temp_arr = [0] * len(arr)
-    num = 0
-    for block in range(0, len(rule)):
-        gap_start = 0 if block == 0 else left_pushed_blocks[block - 1] + rule[block - 1]
-        block_size = rule[block]
-        block_pos = left_pushed_blocks[block]
-        gap_end = block_pos - 1
-        for j in range(gap_start, gap_end + 1):
-            temp_arr[j] = num
-        num += 1
-        for j in range(block_pos, block_pos + block_size):
-            temp_arr[j] = num
-        num += 1
-    capped_gap_start = left_pushed_blocks[len(rule) - 1] + rule[len(rule) - 1]
-    for i in range(capped_gap_start, len(arr)):
-        temp_arr[i] = num
-    num = 0
-    for block in range(0, len(rule)):
-        gap_start = 0 if block == 0 else len(arr) - right_pushed_blocks[len(rule) - block]
-        block_size = rule[block]
-        block_pos = len(arr) - right_pushed_blocks[len(rule) - block - 1] - block_size
-        gap_end = block_pos - 1
-        for j in range(gap_start, gap_end + 1):
-            if temp_arr[j] == num and arr[j] != 0:
-                changed_indices.append(j)
-                arr[j] = 0
-        num += 1
-        for j in range(block_pos, block_pos + block_size):
-            if temp_arr[j] == num and arr[j] != 1:
-                changed_indices.append(j)
-                arr[j] = 1
-        num += 1
-    capped_gap_start = len(arr) - right_pushed_blocks[0]
-    for i in range(capped_gap_start, len(arr)):
-        if temp_arr[i] == num and arr[i] != 0:
-            changed_indices.append(i)
-            arr[i] = 0
+    # print(pos)
+    sliding()
+    # print(pos)
+    for block_to_free in range(len(rule) - 1, 0, -1):
+        if solid[block_to_free] != -1:
+            old_pos = np.copy(pos)
+            old_solid = np.copy(solid)
+            try:
+                target = block_to_free
+                block = block_to_free
+                drawing()
+                # print(pos)
+                sliding()
+                # print(pos)
+            except:
+                pos = np.copy(old_pos)
+                solid = np.copy(old_solid)
+    for cell in range(0, len(valid_state_accumulation)):
+        if valid_state_accumulation[cell] == valid_states_found and arr[cell] == -1:
+            arr[cell] = 1
+            changed_indices.append(cell)
+        elif valid_state_accumulation[cell] == 0 and arr[cell] == -1:
+            arr[cell] = 0
+            changed_indices.append(cell)
     return changed_indices
 
 
