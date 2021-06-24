@@ -2,45 +2,25 @@ import numpy as np
 
 
 def _push_solve(rule, arr):
-    changed_indices = []
-    if len(rule) == 0 or rule[0] == 0:
-        for i in range(0, len(arr)):
-            if arr[i] == -1:
-                arr[i] = 0
-                changed_indices.append(i)
-        return changed_indices
-
-    block = 0
-    pos = np.array([0] * len(rule))
-    solid = np.array([-1] * len(rule))
-    target = 0
-    valid_state_accumulation = np.array([0] * len(arr))
-    valid_states_found = 0
-
-    def invalid():
-        nonlocal target
-        nonlocal block
+    def invalid(block):
         nonlocal valid_states_found
         solid[block] = -1
-        for i in range(0, rule[block]):
-            if arr[pos[block] + i] == 0:
+        if pos[block] + rule[block] > len(arr):
+            return False
+        for i in range(pos[block], pos[block] + rule[block]):
+            if arr[i] == 0:
                 if solid[block] != -1:
-                    target = block
-                    drawing()
-                    return
-                pos[block] += i + 1
-                invalid()
-                return
-            if solid[block] == -1 and arr[pos[block] + i] == 1:
-                solid[block] = i
+                    return drawing(block)
+                pos[block] = i + 1
+                return invalid(block)
+            if solid[block] == -1 and arr[i] == 1:
+                solid[block] = i - pos[block]
 
         if solid[block] == -1 and pos[block] + rule[block] < len(arr) and arr[pos[block] + rule[block]] == 1:
             solid[block] = rule[block]
         while pos[block] + rule[block] < len(arr) and arr[pos[block] + rule[block]] == 1:
             if solid[block] == 0:
-                target = block
-                drawing()
-                return
+                return drawing(block)
             pos[block] += 1
             solid[block] -= 1
 
@@ -48,8 +28,7 @@ def _push_solve(rule, arr):
             if pos[block + 1] < pos[block] + rule[block] + 1:
                 pos[block + 1] = pos[block] + rule[block] + 1
             block += 1
-            invalid()
-            return
+            return invalid(block)
         trailing_solid_pos = -1
         for i in range(pos[block] + rule[block] + 1, len(arr)):
             if arr[i] == 1:
@@ -59,26 +38,22 @@ def _push_solve(rule, arr):
             if solid[block] > 0:
                 pos[block] += 1
                 solid[block] -= 1
-                invalid()
+                return invalid(block)
             elif solid[block] == 0:
-                target = block
-                drawing()
+                return drawing(block)
             else:
                 pos[block] = trailing_solid_pos - rule[block] + 1
-                invalid()
+                return invalid(block)
         valid_states_found += 1
         for b in range(0, len(rule)):
             for i in range(pos[b], pos[b] + rule[b]):
                 valid_state_accumulation[i] += 1
-        # print(valid_state_accumulation)
+        return True
 
     def sliding():
-        nonlocal valid_states_found
-        lim = None
         for i in range(len(rule) - 1, -1, -1):
-            if i == len(rule) - 1:
-                lim = len(arr)
-            else:
+            lim = len(arr)
+            if i < len(rule) - 1:
                 lim = pos[i + 1] - 1
             while pos[i] + rule[i] < lim \
                     and (solid[i] == -1 or solid[i] > 0) \
@@ -93,60 +68,61 @@ def _push_solve(rule, arr):
                                 enough_room = False
                                 break
                         if enough_room:
+                            for b in range(pos[i], pos[i] + rule[i]):
+                                valid_state_accumulation[b] = 999999
                             pos[i] = index
-                            valid_states_found += 1
-                            for b in range(0, len(rule)):
-                                for j in range(pos[b], pos[b] + rule[b]):
-                                    valid_state_accumulation[j] += 1
-                            # print(valid_state_accumulation)
+                            for b in range(pos[i], pos[i] + rule[i]):
+                                valid_state_accumulation[b] = 999999
                             break
                     if index + rule[i] > lim:
                         break
                 else:
                     if solid[i] != -1:
                         solid[i] -= 1
-                    valid_states_found += 1
+                    valid_state_accumulation[pos[i]] = 999999
+                    valid_state_accumulation[pos[i] + rule[i]] = 999999
                     pos[i] += 1
-                    for b in range(0, len(rule)):
-                        for j in range(pos[b], pos[b] + rule[b]):
-                            valid_state_accumulation[j] += 1
-                    # print(valid_state_accumulation)
 
-    def drawing():
-        nonlocal target
-        nonlocal block
-        block -= 1
-        if block < 0:
-            raise RuntimeError
+    def drawing(block):
+        while True:
+            block -= 1
+            if block < 0:
+                return False
+            if solid[block] != 0:
+                break
         if solid[block] > 0:
             pos[block] += 1
             solid[block] -= 1
-            invalid()
-        elif solid[block] == 0:
-            target = block
-            drawing()
-        else:
-            pos[block] = pos[target] + solid[target] - rule[block] + 1
-            invalid()
+            return invalid(block)
+        pos[block] = pos[block + 1] + solid[block + 1] - rule[block] + 1
+        return invalid(block)
 
-    invalid()
-    # print(pos)
+    changed_indices = []
+    if len(rule) == 0 or rule[0] == 0:
+        for cell in range(0, len(arr)):
+            if arr[cell] == -1:
+                arr[cell] = 0
+                changed_indices.append(cell)
+        return changed_indices
+
+    pos = np.full(len(rule), 0)
+    solid = np.full(len(rule), -1)
+    valid_state_accumulation = np.full(len(arr), 0)
+    valid_states_found = 0
+
+    if not invalid(0):
+        return [-1]
     sliding()
-    # print(pos)
     for block_to_free in range(len(rule) - 1, 0, -1):
-        if solid[block_to_free] != -1:
+        while solid[block_to_free] != -1:
             old_pos = np.copy(pos)
             old_solid = np.copy(solid)
-            try:
-                target = block_to_free
-                block = block_to_free
-                drawing()
-                # print(pos)
+            if drawing(block_to_free):
                 sliding()
-                # print(pos)
-            except:
+            else:
                 pos = np.copy(old_pos)
                 solid = np.copy(old_solid)
+                break
     for cell in range(0, len(valid_state_accumulation)):
         if valid_state_accumulation[cell] == valid_states_found and arr[cell] == -1:
             arr[cell] = 1
@@ -202,9 +178,11 @@ def solve(row_constraints, col_constraints, puzzle):
     puzzle_height = len(puzzle)
     puzzle_width = len(puzzle[0])
 
+    # iterate through each updated row and column until no more progress has been made with the push solver
+    # if no progress has been made, the puzzle is either solved or a guess is required to continue
     first_pass = True
-    update_row_indices = [True] * puzzle_height
-    update_col_indices = [True] * puzzle_width
+    update_row_indices = np.full(puzzle_height, True)
+    update_col_indices = np.full(puzzle_width, True)
     while True:
         for i in range(0, 2):
             update_indices = update_row_indices if i else update_col_indices
@@ -215,9 +193,8 @@ def solve(row_constraints, col_constraints, puzzle):
             for j in range(0, puzzle_width if i else puzzle_height):
                 arr = puzzle[:, j] if i else puzzle[j, :]
                 if (update_col_indices if i else update_row_indices)[j]:
-                    try:
-                        changed_indices = _push_solve((col_constraints if i else row_constraints)[j], arr)
-                    except:
+                    changed_indices = _push_solve((col_constraints if i else row_constraints)[j], arr)
+                    if changed_indices == [-1]:
                         return False
                     for k in changed_indices:
                         update_indices[k] = True
