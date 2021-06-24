@@ -1,6 +1,6 @@
 import pytest
+from picross_solver import picross_solver as solver
 import numpy as np
-import picross_solver as solver
 
 _ = -1
 
