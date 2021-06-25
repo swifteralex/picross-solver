@@ -84,16 +84,18 @@ def _push_solve(rule, arr):
                     pos[i] += 1
 
     def drawing(block):
-        while True:
-            block -= 1
-            if block < 0:
-                return False
-            if solid[block] != 0:
-                break
+        block -= 1
+        if block < 0:
+            return False
+        if solid[block] == 0:
+            return drawing(block)
         if solid[block] > 0:
-            pos[block] += 1
-            solid[block] -= 1
-            return invalid(block)
+            if arr[pos[block] + rule[block]] != 0:
+                pos[block] += 1
+                solid[block] -= 1
+                return invalid(block)
+            else:
+                return drawing(block)
         pos[block] = pos[block + 1] + solid[block + 1] - rule[block] + 1
         return invalid(block)
 

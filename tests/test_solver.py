@@ -89,6 +89,11 @@ def test_push_solve():
     assert solver._push_solve(rule, arr) == [10, 12]
     assert np.all(arr == np.array(
         [_, _, _, 1, _, _, 0, _, 0, _, 0, 1, 0, _, _]))
+    rule = [1, 1, 2, 1]
+    arr = [_, 0, 1, 0, _, 0, _, 1, 0, _, _, 0, 1]
+    assert solver._push_solve(rule, arr) == []
+    assert np.all(arr == np.array(
+        [_, 0, 1, 0, _, 0, _, 1, 0, _, _, 0, 1]))
 
     # test error checking
     rule = [5]
