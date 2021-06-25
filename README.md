@@ -14,7 +14,7 @@ To install, simply run `pip install picross-solver`
 
 ## Usage
 
-Once the package is installed, import the package with `import picross_solver from picross_solver`. After that, you should have access to the solve() function.
+Once the package is installed, import the package with `from picross_solver import picross_solver`. After that, you should have access to the solve() function.
 
 The solve() function takes in 3 arguments -- an array of arrays for the row clues/constraints, an array of arrays for the col clues/constraints, and a 2d numpy array representing the puzzle grid. In the puzzle grid, values -1, 0, and 1 represent a cell that is unknown, empty, or full, respectively. solve() will attempt to fill in the provided puzzle variable, overwriting the puzzle grid in the process. solve() will return True if a solution has been found, and the provided puzzle grid will be overwritten with a solution to the puzzle; it will return False if it couldn't find a solution.
 
