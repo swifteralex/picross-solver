@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-sys.path.append('../picross_solver')
+sys.path.append('../src/picross_solver')
 import picross_solver as solver
 
 _ = -1
