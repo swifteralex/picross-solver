@@ -90,7 +90,9 @@ def _push_solve(rule, arr):
         if solid[block] == 0:
             return drawing(block)
         if solid[block] > 0:
-            if arr[pos[block] + rule[block]] != 0:
+            cover_up_to = pos[block + 1] + solid[block + 1]
+            max_stretch_to = pos[block] + rule[block] - 1 + solid[block]
+            if arr[pos[block] + rule[block]] != 0 and max_stretch_to >= cover_up_to:
                 pos[block] += 1
                 solid[block] -= 1
                 return invalid(block)
